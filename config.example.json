@@ -1,0 +1,10 @@
+{
+    "apiKey": "Set your API Key",
+    "baseUrl": "http://hogehoge.example.com",
+    "query": [
+        {
+            "queryId": "1080",
+            "params": "p_yyyy-mm"
+        }
+    ]
+}
