@@ -34,6 +34,7 @@ type RefreshAPIResponse struct {
 	} `json:"job"`
 }
 
+// TODO 上記構造体と同じなのでRedashAPIRequestとかの名前で1つにまとめる
 // JobStatusAPIResponse はクエリをリフレッシュするAPIのレスポンスを示す構造体
 type JobStatusAPIResponse struct {
 	Job struct {
@@ -132,6 +133,7 @@ func callJobStatusAPI(Conf Config, jobID string) int {
 	return respBody.Job.QueryResultID
 }
 
+// リフレッシュ結果を取得するAPIをコールして結果をファイル書き出す
 func callResultAPIAndWriteFile(Conf Config, queryResultID int) {
 	targetURL := fmt.Sprintf("%s/api/queries/%s/results/%s.csv?api_key=%s",
 		Conf.BaseURL,
@@ -147,8 +149,9 @@ func callResultAPIAndWriteFile(Conf Config, queryResultID int) {
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 
-	// ファイル書き込み
-	file, err := os.Create("./test.csv")
+	// ファイル書き込み。
+	// TODO ファイル書き出し先のパスも指定できるようにする
+	file, err := os.Create("./test.csv") // TODO 危ないのでgit管理外のディレクトリに出力するようにする
 	if err != nil {
 		log.Println(err)
 	}
