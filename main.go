@@ -15,9 +15,10 @@ const configFile = "./config.json" // 設定ファイルのパス
 
 // Config は設定ファイルを示す構造体
 type Config struct {
-	APIKey  string `json:"apiKey"`
-	BaseURL string `json:"baseURL"`
-	Query   []struct {
+	APIKey     string `json:"apiKey"`
+	BaseURL    string `json:"baseURL"`
+	ExportPath string `json:"exportPath"`
+	Query      []struct {
 		QueryID string `json:"queryId"`
 		Params  string `json:"params"`
 	} `json:"query"`
@@ -138,9 +139,13 @@ func callResultAPIAndWriteFile(Conf Config, queryResultID int) {
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 
-	// ファイル書き込み。
-	// TODO ファイル書き出し先のパスも指定できるようにする
-	file, err := os.Create("./test.csv") // TODO 危ないのでgit管理外のディレクトリに出力するようにする
+	// ファイル書き込み
+	exportFileName := fmt.Sprintf("%s/%s.csv",
+		Conf.ExportPath,
+		Conf.Query[0].QueryID,
+	)
+
+	file, err := os.Create(exportFileName)
 	if err != nil {
 		log.Println(err)
 	}
