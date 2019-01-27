@@ -15,28 +15,18 @@ const configFile = "./config.json" // 設定ファイルのパス
 
 // Config は設定ファイルを示す構造体
 type Config struct {
-	APIKey  string `json:"apiKey"`
-	BaseURL string `json:"baseURL"`
-	Query   []struct {
+	APIKey     string `json:"apiKey"`
+	BaseURL    string `json:"baseURL"`
+	ExportPath string `json:"exportPath"`
+	Query      []struct {
 		QueryID string `json:"queryId"`
 		Params  string `json:"params"`
 	} `json:"query"`
 }
 
-// RefreshAPIResponse はクエリをリフレッシュするAPIのレスポンスを示す構造体
-type RefreshAPIResponse struct {
-	Job struct {
-		Status        int    `json:"status"`
-		Errorstatus   string `json:"error"`
-		ID            string `json:"id"`
-		QueryResultID int    `json:"query_result_id"`
-		UpdatedAt     int    `json:"updated_at"`
-	} `json:"job"`
-}
-
-// TODO 上記構造体と同じなのでRedashAPIRequestとかの名前で1つにまとめる
-// JobStatusAPIResponse はクエリをリフレッシュするAPIのレスポンスを示す構造体
-type JobStatusAPIResponse struct {
+// RedashAPIResponse はRedashAPIのレスポンスを示す構造体。
+// RefreshAPIとJobStatusAPIのレスポンス兼用
+type RedashAPIResponse struct {
 	Job struct {
 		Status        int    `json:"status"`
 		Errorstatus   string `json:"error"`
@@ -52,7 +42,7 @@ func getConfig() *Config {
 		log.Println(err)
 	}
 
-	conf := new(Config)
+	conf := new(Config) // new()ではConfigのアドレスである*config型の値（つまりポインタ）を返却する
 	err = json.Unmarshal(jsonString, conf)
 	if err != nil {
 		log.Println(err)
@@ -89,7 +79,7 @@ func callRefreshAPI(Conf Config) string {
 	}
 
 	// レスポンスを構造体にパースする
-	respBody := new(RefreshAPIResponse)
+	respBody := new(RedashAPIResponse)
 	err = json.Unmarshal(body, respBody)
 	if err != nil {
 		log.Println(err)
@@ -100,7 +90,7 @@ func callRefreshAPI(Conf Config) string {
 
 // リフレッシュジョブの状況を確認するAPIをコールする
 func callJobStatusAPI(Conf Config, jobID string) int {
-	respBody := new(JobStatusAPIResponse)
+	respBody := new(RedashAPIResponse)
 	targetURL := fmt.Sprintf("%s/api/jobs/%s?api_key=%s",
 		Conf.BaseURL,
 		jobID,
@@ -149,9 +139,13 @@ func callResultAPIAndWriteFile(Conf Config, queryResultID int) {
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 
-	// ファイル書き込み。
-	// TODO ファイル書き出し先のパスも指定できるようにする
-	file, err := os.Create("./test.csv") // TODO 危ないのでgit管理外のディレクトリに出力するようにする
+	// ファイル書き込み
+	exportFileName := fmt.Sprintf("%s/%s.csv",
+		Conf.ExportPath,
+		Conf.Query[0].QueryID,
+	)
+
+	file, err := os.Create(exportFileName)
 	if err != nil {
 		log.Println(err)
 	}

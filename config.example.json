@@ -1,6 +1,7 @@
 {
     "apiKey": "Set your API Key",
     "baseUrl": "http://hogehoge.example.com",
+    "exportPath": "/Users/h_hiroki/Desktop",
     "query": [
         {
             "queryId": "1080",
