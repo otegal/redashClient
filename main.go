@@ -23,20 +23,9 @@ type Config struct {
 	} `json:"query"`
 }
 
-// RefreshAPIResponse はクエリをリフレッシュするAPIのレスポンスを示す構造体
-type RefreshAPIResponse struct {
-	Job struct {
-		Status        int    `json:"status"`
-		Errorstatus   string `json:"error"`
-		ID            string `json:"id"`
-		QueryResultID int    `json:"query_result_id"`
-		UpdatedAt     int    `json:"updated_at"`
-	} `json:"job"`
-}
-
-// TODO 上記構造体と同じなのでRedashAPIRequestとかの名前で1つにまとめる
-// JobStatusAPIResponse はクエリをリフレッシュするAPIのレスポンスを示す構造体
-type JobStatusAPIResponse struct {
+// RedashAPIResponse はRedashAPIのレスポンスを示す構造体。
+// RefreshAPIとJobStatusAPIのレスポンス兼用
+type RedashAPIResponse struct {
 	Job struct {
 		Status        int    `json:"status"`
 		Errorstatus   string `json:"error"`
@@ -52,7 +41,7 @@ func getConfig() *Config {
 		log.Println(err)
 	}
 
-	conf := new(Config)
+	conf := new(Config) // new()ではConfigのアドレスである*config型の値（つまりポインタ）を返却する
 	err = json.Unmarshal(jsonString, conf)
 	if err != nil {
 		log.Println(err)
@@ -89,7 +78,7 @@ func callRefreshAPI(Conf Config) string {
 	}
 
 	// レスポンスを構造体にパースする
-	respBody := new(RefreshAPIResponse)
+	respBody := new(RedashAPIResponse)
 	err = json.Unmarshal(body, respBody)
 	if err != nil {
 		log.Println(err)
@@ -100,7 +89,7 @@ func callRefreshAPI(Conf Config) string {
 
 // リフレッシュジョブの状況を確認するAPIをコールする
 func callJobStatusAPI(Conf Config, jobID string) int {
-	respBody := new(JobStatusAPIResponse)
+	respBody := new(RedashAPIResponse)
 	targetURL := fmt.Sprintf("%s/api/jobs/%s?api_key=%s",
 		Conf.BaseURL,
 		jobID,
