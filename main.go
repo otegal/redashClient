@@ -20,7 +20,10 @@ type Config struct {
 	ExportPath string `json:"exportPath"`
 	Query      []struct {
 		QueryID string `json:"queryId"`
-		Params  string `json:"params"`
+		Params  []struct {
+			BaseParam string   `json:"baseParam"`
+			SetParams []string `json:"setParams"`
+		} `json"params"`
 	} `json:"query"`
 }
 
@@ -39,7 +42,7 @@ type RedashAPIResponse struct {
 func getConfig() *Config {
 	jsonString, err := ioutil.ReadFile(configFile)
 	if err != nil {
-		log.Println(err)
+		log.Println(err) // TODO errに入った場合、fatalの方が良さげ。処理止めたい
 	}
 
 	conf := new(Config) // new()ではConfigのアドレスである*config型の値（つまりポインタ）を返却する
@@ -52,16 +55,14 @@ func getConfig() *Config {
 }
 
 // クエリ更新のAPIをコールする
-func callRefreshAPI(Conf Config) string {
-	// redashのクエリパラメタ仮実装。
-	targetYearMonth := time.Now().Format("2006-01")
-
+func callRefreshAPI(Conf Config, queryID string, baseParam string, setParam string) string {
+	fmt.Println(queryID, baseParam, setParam)
 	targetURL := fmt.Sprintf("%s/api/queries/%s/refresh?api_key=%s&%s=%s",
 		Conf.BaseURL,
-		Conf.Query[0].QueryID,
+		queryID,
 		Conf.APIKey,
-		Conf.Query[0].Params,
-		targetYearMonth,
+		baseParam,
+		setParam,
 	)
 	fmt.Println("targetURL is ... " + targetURL)
 
@@ -124,10 +125,10 @@ func callJobStatusAPI(Conf Config, jobID string) int {
 }
 
 // リフレッシュ結果を取得するAPIをコールして結果をファイル書き出す
-func callResultAPIAndWriteFile(Conf Config, queryResultID int) {
+func callResultAPIAndWriteFile(Conf Config, queryID string, setParam string, queryResultID int) {
 	targetURL := fmt.Sprintf("%s/api/queries/%s/results/%s.csv?api_key=%s",
 		Conf.BaseURL,
-		Conf.Query[0].QueryID,
+		queryID,
 		strconv.Itoa(queryResultID),
 		Conf.APIKey,
 	)
@@ -140,9 +141,10 @@ func callResultAPIAndWriteFile(Conf Config, queryResultID int) {
 	body, err := ioutil.ReadAll(resp.Body)
 
 	// ファイル書き込み
-	exportFileName := fmt.Sprintf("%s/%s.csv",
+	exportFileName := fmt.Sprintf("%s/%s/%s.csv", // TODO すでにフォルダが存在しないと書き込みできないのでロジック追加
 		Conf.ExportPath,
-		Conf.Query[0].QueryID,
+		queryID,
+		setParam,
 	)
 
 	file, err := os.Create(exportFileName)
@@ -158,14 +160,23 @@ func main() {
 	// configの読み込み
 	Conf := getConfig()
 
-	// クエリをリフレッシュするAPIをコール
-	jobID := callRefreshAPI(*Conf)
-	fmt.Println(jobID)
+	// Query単位で処理する。 TODO 実装予定。まだ複数指定してもできないよ
+	for _, query := range Conf.Query {
+		// Params単位で処理する。
+		for _, params := range query.Params {
+			// SetParams単位で処理する。
+			for _, setParam := range params.SetParams {
+				// // クエリをリフレッシュするAPIをコール
+				jobID := callRefreshAPI(*Conf, query.QueryID, params.BaseParam, setParam)
+				fmt.Println(jobID)
 
-	// リフレッシュジョブの状況を確認するAPIをコール
-	queryResultID := callJobStatusAPI(*Conf, jobID)
-	fmt.Println(queryResultID)
+				// リフレッシュジョブの状況を確認するAPIをコール
+				queryResultID := callJobStatusAPI(*Conf, jobID)
+				fmt.Println(queryResultID)
 
-	// リフレッシュ結果を取得するAPIをコールして結果をファイル書き出し
-	callResultAPIAndWriteFile(*Conf, queryResultID)
+				// リフレッシュ結果を取得するAPIをコールして結果をファイル書き出し
+				callResultAPIAndWriteFile(*Conf, query.QueryID, setParam, queryResultID)
+			}
+		}
+	}
 }
