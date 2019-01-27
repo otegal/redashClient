@@ -20,7 +20,10 @@ type Config struct {
 	ExportPath string `json:"exportPath"`
 	Query      []struct {
 		QueryID string `json:"queryId"`
-		Params  string `json:"params"`
+		Params  []struct {
+			BaseParam string   `json:"baseParam"`
+			SetParam  []string `json:"setParams"`
+		} `json"params"`
 	} `json:"query"`
 }
 
