@@ -19,11 +19,9 @@ type Config struct {
 	BaseURL    string `json:"baseURL"`
 	ExportPath string `json:"exportPath"`
 	Query      []struct {
-		QueryID string `json:"queryId"`
-		Params  []struct {
-			BaseParam string   `json:"baseParam"`
-			SetParams []string `json:"setParams"`
-		} `json"params"`
+		QueryID   string   `json:"queryId"`
+		BaseParam string   `json:"baseParam"`
+		SetParams []string `json:"setParams"`
 	} `json:"query"`
 }
 
@@ -42,13 +40,13 @@ type RedashAPIResponse struct {
 func getConfig() *Config {
 	jsonString, err := ioutil.ReadFile(configFile)
 	if err != nil {
-		log.Println(err) // TODO errに入った場合、fatalの方が良さげ。処理止めたい
+		log.Fatalln(err)
 	}
 
 	conf := new(Config) // new()ではConfigのアドレスである*config型の値（つまりポインタ）を返却する
 	err = json.Unmarshal(jsonString, conf)
 	if err != nil {
-		log.Println(err)
+		log.Fatalln(err)
 	}
 
 	return conf
@@ -71,19 +69,19 @@ func callRefreshAPI(Conf Config, queryID string, baseParam string, setParam stri
 	resp, err := client.Do(req)
 
 	if err != nil {
-		log.Println(err)
+		log.Fatalln(err)
 	}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Println(err)
+		log.Fatalln(err)
 	}
 
 	// レスポンスを構造体にパースする
 	respBody := new(RedashAPIResponse)
 	err = json.Unmarshal(body, respBody)
 	if err != nil {
-		log.Println(err)
+		log.Fatalln(err)
 	}
 
 	return respBody.Job.ID
@@ -102,7 +100,7 @@ func callJobStatusAPI(Conf Config, jobID string) int {
 	for {
 		resp, err := http.Get(targetURL)
 		if err != nil {
-			log.Println(err)
+			log.Fatalln(err)
 		}
 		defer resp.Body.Close()
 		body, err := ioutil.ReadAll(resp.Body)
@@ -110,7 +108,7 @@ func callJobStatusAPI(Conf Config, jobID string) int {
 		// レスポンスを構造体にパースする
 		err = json.Unmarshal(body, respBody)
 		if err != nil {
-			log.Println(err)
+			log.Fatalln(err)
 		}
 
 		if respBody.Job.QueryResultID != 0 {
@@ -135,7 +133,7 @@ func callResultAPIAndWriteFile(Conf Config, queryID string, setParam string, que
 
 	resp, err := http.Get(targetURL)
 	if err != nil {
-		log.Println(err)
+		log.Fatalln(err)
 	}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
@@ -149,7 +147,7 @@ func callResultAPIAndWriteFile(Conf Config, queryID string, setParam string, que
 
 	file, err := os.Create(exportFileName)
 	if err != nil {
-		log.Println(err)
+		log.Fatalln(err)
 	}
 	defer file.Close()
 
@@ -162,21 +160,17 @@ func main() {
 
 	// Query単位で処理する。 TODO 実装予定。まだ複数指定してもできないよ
 	for _, query := range Conf.Query {
-		// Params単位で処理する。
-		for _, params := range query.Params {
-			// SetParams単位で処理する。
-			for _, setParam := range params.SetParams {
-				// // クエリをリフレッシュするAPIをコール
-				jobID := callRefreshAPI(*Conf, query.QueryID, params.BaseParam, setParam)
-				fmt.Println(jobID)
+		for _, setParam := range query.SetParams {
+			// クエリをリフレッシュするAPIをコール
+			jobID := callRefreshAPI(*Conf, query.QueryID, query.BaseParam, setParam)
+			fmt.Println(jobID)
 
-				// リフレッシュジョブの状況を確認するAPIをコール
-				queryResultID := callJobStatusAPI(*Conf, jobID)
-				fmt.Println(queryResultID)
+			// リフレッシュジョブの状況を確認するAPIをコール
+			queryResultID := callJobStatusAPI(*Conf, jobID)
+			fmt.Println(queryResultID)
 
-				// リフレッシュ結果を取得するAPIをコールして結果をファイル書き出し
-				callResultAPIAndWriteFile(*Conf, query.QueryID, setParam, queryResultID)
-			}
+			// リフレッシュ結果を取得するAPIをコールして結果をファイル書き出し
+			callResultAPIAndWriteFile(*Conf, query.QueryID, setParam, queryResultID)
 		}
 	}
 }
