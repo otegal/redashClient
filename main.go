@@ -138,10 +138,20 @@ func callResultAPIAndWriteFile(Conf Config, queryID string, setParam string, que
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 
-	// ファイル書き込み
-	exportFileName := fmt.Sprintf("%s/%s/%s.csv", // TODO すでにフォルダが存在しないと書き込みできないのでロジック追加
+	// 以下はファイル出力処理
+	exportDir := fmt.Sprintf("%s/%s",
 		Conf.ExportPath,
 		queryID,
+	)
+
+	// export先のディレクトリが存在しない場合は作成する
+	if _, err := os.Stat(exportDir); err != nil {
+		os.Mkdir(exportDir, 0777)
+	}
+
+	// ファイル書き込み
+	exportFileName := fmt.Sprintf("%s/%s.csv",
+		exportDir,
 		setParam,
 	)
 
