@@ -40,13 +40,13 @@ type RedashAPIResponse struct {
 func getConfig() *Config {
 	jsonString, err := ioutil.ReadFile(configFile)
 	if err != nil {
-		log.Println(err) // TODO errに入った場合、fatalの方が良さげ。処理止めたい
+		log.Fatalln(err)
 	}
 
 	conf := new(Config) // new()ではConfigのアドレスである*config型の値（つまりポインタ）を返却する
 	err = json.Unmarshal(jsonString, conf)
 	if err != nil {
-		log.Println(err)
+		log.Fatalln(err)
 	}
 
 	return conf
@@ -69,19 +69,19 @@ func callRefreshAPI(Conf Config, queryID string, baseParam string, setParam stri
 	resp, err := client.Do(req)
 
 	if err != nil {
-		log.Println(err)
+		log.Fatalln(err)
 	}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Println(err)
+		log.Fatalln(err)
 	}
 
 	// レスポンスを構造体にパースする
 	respBody := new(RedashAPIResponse)
 	err = json.Unmarshal(body, respBody)
 	if err != nil {
-		log.Println(err)
+		log.Fatalln(err)
 	}
 
 	return respBody.Job.ID
@@ -100,7 +100,7 @@ func callJobStatusAPI(Conf Config, jobID string) int {
 	for {
 		resp, err := http.Get(targetURL)
 		if err != nil {
-			log.Println(err)
+			log.Fatalln(err)
 		}
 		defer resp.Body.Close()
 		body, err := ioutil.ReadAll(resp.Body)
@@ -108,7 +108,7 @@ func callJobStatusAPI(Conf Config, jobID string) int {
 		// レスポンスを構造体にパースする
 		err = json.Unmarshal(body, respBody)
 		if err != nil {
-			log.Println(err)
+			log.Fatalln(err)
 		}
 
 		if respBody.Job.QueryResultID != 0 {
@@ -133,7 +133,7 @@ func callResultAPIAndWriteFile(Conf Config, queryID string, setParam string, que
 
 	resp, err := http.Get(targetURL)
 	if err != nil {
-		log.Println(err)
+		log.Fatalln(err)
 	}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
@@ -147,7 +147,7 @@ func callResultAPIAndWriteFile(Conf Config, queryID string, setParam string, que
 
 	file, err := os.Create(exportFileName)
 	if err != nil {
-		log.Println(err)
+		log.Fatalln(err)
 	}
 	defer file.Close()
 
