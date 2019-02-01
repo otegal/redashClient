@@ -19,11 +19,9 @@ type Config struct {
 	BaseURL    string `json:"baseURL"`
 	ExportPath string `json:"exportPath"`
 	Query      []struct {
-		QueryID string `json:"queryId"`
-		Params  []struct {
-			BaseParam string   `json:"baseParam"`
-			SetParams []string `json:"setParams"`
-		} `json"params"`
+		QueryID   string   `json:"queryId"`
+		BaseParam string   `json:"baseParam"`
+		SetParams []string `json:"setParams"`
 	} `json:"query"`
 }
 
@@ -162,21 +160,17 @@ func main() {
 
 	// Query単位で処理する。 TODO 実装予定。まだ複数指定してもできないよ
 	for _, query := range Conf.Query {
-		// Params単位で処理する。
-		for _, params := range query.Params {
-			// SetParams単位で処理する。
-			for _, setParam := range params.SetParams {
-				// // クエリをリフレッシュするAPIをコール
-				jobID := callRefreshAPI(*Conf, query.QueryID, params.BaseParam, setParam)
-				fmt.Println(jobID)
+		for _, setParam := range query.SetParams {
+			// クエリをリフレッシュするAPIをコール
+			jobID := callRefreshAPI(*Conf, query.QueryID, query.BaseParam, setParam)
+			fmt.Println(jobID)
 
-				// リフレッシュジョブの状況を確認するAPIをコール
-				queryResultID := callJobStatusAPI(*Conf, jobID)
-				fmt.Println(queryResultID)
+			// リフレッシュジョブの状況を確認するAPIをコール
+			queryResultID := callJobStatusAPI(*Conf, jobID)
+			fmt.Println(queryResultID)
 
-				// リフレッシュ結果を取得するAPIをコールして結果をファイル書き出し
-				callResultAPIAndWriteFile(*Conf, query.QueryID, setParam, queryResultID)
-			}
+			// リフレッシュ結果を取得するAPIをコールして結果をファイル書き出し
+			callResultAPIAndWriteFile(*Conf, query.QueryID, setParam, queryResultID)
 		}
 	}
 }

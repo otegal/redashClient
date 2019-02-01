@@ -5,15 +5,11 @@
     "query": [
         {
             "queryId": "1080",
-            "params": [
-                {
-                    "baseParam": "p_yyyy-mm",
-                    "setParams": [
-                        "2018-12",
-                        "2018-11",
-                        "2018-10"
-                    ]
-                }
+            "baseParam": "p_yyyy-mm",
+            "setParams": [
+                "2018-12",
+                "2018-11",
+                "2018-10"
             ]
         }
     ]
