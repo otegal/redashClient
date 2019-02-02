@@ -19,9 +19,9 @@ type Config struct {
 	BaseURL    string `json:"baseURL"`
 	ExportPath string `json:"exportPath"`
 	Query      []struct {
-		QueryID   string   `json:"queryId"`
-		BaseParam string   `json:"baseParam"`
-		SetParams []string `json:"setParams"`
+		QueryID    string     `json:"queryId"`
+		BaseParams []string   `json:"baseParams"`
+		SetParams  [][]string `json;"setParams"`
 	} `json:"query"`
 }
 
@@ -53,14 +53,12 @@ func getConfig() *Config {
 }
 
 // クエリ更新のAPIをコールする
-func callRefreshAPI(Conf Config, queryID string, baseParam string, setParam string) string {
-	fmt.Println(queryID, baseParam, setParam)
-	targetURL := fmt.Sprintf("%s/api/queries/%s/refresh?api_key=%s&%s=%s",
+func callRefreshAPI(Conf Config, queryID string, requestParam string) string {
+	targetURL := fmt.Sprintf("%s/api/queries/%s/refresh?api_key=%s%s",
 		Conf.BaseURL,
 		queryID,
 		Conf.APIKey,
-		baseParam,
-		setParam,
+		requestParam,
 	)
 	fmt.Println("targetURL is ... " + targetURL)
 
@@ -123,7 +121,7 @@ func callJobStatusAPI(Conf Config, jobID string) int {
 }
 
 // リフレッシュ結果を取得するAPIをコールして結果をファイル書き出す
-func callResultAPIAndWriteFile(Conf Config, queryID string, setParam string, queryResultID int) {
+func callResultAPIAndWriteFile(Conf Config, queryID string, requestParam string, queryResultID int) {
 	targetURL := fmt.Sprintf("%s/api/queries/%s/results/%s.csv?api_key=%s",
 		Conf.BaseURL,
 		queryID,
@@ -152,7 +150,7 @@ func callResultAPIAndWriteFile(Conf Config, queryID string, setParam string, que
 	// ファイル書き込み
 	exportFileName := fmt.Sprintf("%s/%s.csv",
 		exportDir,
-		setParam,
+		requestParam,
 	)
 
 	file, err := os.Create(exportFileName)
@@ -168,11 +166,17 @@ func main() {
 	// configの読み込み
 	Conf := getConfig()
 
-	// Query単位で処理する。 TODO 実装予定。まだ複数指定してもできないよ
+	// Query単位で処理する
 	for _, query := range Conf.Query {
 		for _, setParam := range query.SetParams {
+			// リクエストパラメタを作る
+			requestParam := ""
+			for index, baseParam := range query.BaseParams {
+				requestParam += "&" + baseParam + "=" + setParam[index]
+			}
+
 			// クエリをリフレッシュするAPIをコール
-			jobID := callRefreshAPI(*Conf, query.QueryID, query.BaseParam, setParam)
+			jobID := callRefreshAPI(*Conf, query.QueryID, requestParam)
 			fmt.Println(jobID)
 
 			// リフレッシュジョブの状況を確認するAPIをコール
@@ -180,7 +184,7 @@ func main() {
 			fmt.Println(queryResultID)
 
 			// リフレッシュ結果を取得するAPIをコールして結果をファイル書き出し
-			callResultAPIAndWriteFile(*Conf, query.QueryID, setParam, queryResultID)
+			callResultAPIAndWriteFile(*Conf, query.QueryID, requestParam, queryResultID)
 		}
 	}
 }
