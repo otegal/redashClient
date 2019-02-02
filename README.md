@@ -16,7 +16,7 @@ configに設定値を入れて実行するだけ。
     "exportPath": "/Users/h_hiroki/Desktop", //取得したCSVの出力先を指定できる
     "query": [
         {
-            "queryId": "1106" // queryキーは後述する
+            "queryId": "1106" //queryキーは後述する
         }
     ]
 }
