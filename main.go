@@ -122,6 +122,11 @@ func callJobStatusAPI(Conf Config, jobID string) int {
 
 // リフレッシュ結果を取得するAPIをコールして結果をファイル書き出す
 func callResultAPIAndWriteFile(Conf Config, queryID string, requestParam string, queryResultID int) {
+	// ファイル名に利用するrequestParamのチェック。空文字ならresultをデフォルトでセットする
+	if requestParam == "" {
+		requestParam = "result"
+	}
+
 	targetURL := fmt.Sprintf("%s/api/queries/%s/results/%s.csv?api_key=%s",
 		Conf.BaseURL,
 		queryID,
@@ -162,29 +167,38 @@ func callResultAPIAndWriteFile(Conf Config, queryID string, requestParam string,
 	file.Write(body)
 }
 
+func getCsv(conf Config, queryID string, requestParam string) {
+	// クエリをリフレッシュするAPIをコール
+	jobID := callRefreshAPI(conf, queryID, requestParam)
+	fmt.Println(jobID)
+
+	// リフレッシュジョブの状況を確認するAPIをコール
+	queryResultID := callJobStatusAPI(conf, jobID)
+	fmt.Println(queryResultID)
+
+	// リフレッシュ結果を取得するAPIをコールして結果をファイル書き出し
+	callResultAPIAndWriteFile(conf, queryID, requestParam, queryResultID)
+}
+
 func main() {
 	// configの読み込み
 	Conf := getConfig()
 
 	// Query単位で処理する
 	for _, query := range Conf.Query {
+		// baseParamsが存在しない場合
+		if len(query.BaseParams) == 0 {
+			requestParam := ""
+			getCsv(*Conf, query.QueryID, requestParam)
+		}
+
 		for _, setParam := range query.SetParams {
 			// リクエストパラメタを作る
 			requestParam := ""
 			for index, baseParam := range query.BaseParams {
 				requestParam += "&" + baseParam + "=" + setParam[index]
 			}
-
-			// クエリをリフレッシュするAPIをコール
-			jobID := callRefreshAPI(*Conf, query.QueryID, requestParam)
-			fmt.Println(jobID)
-
-			// リフレッシュジョブの状況を確認するAPIをコール
-			queryResultID := callJobStatusAPI(*Conf, jobID)
-			fmt.Println(queryResultID)
-
-			// リフレッシュ結果を取得するAPIをコールして結果をファイル書き出し
-			callResultAPIAndWriteFile(*Conf, query.QueryID, requestParam, queryResultID)
+			getCsv(*Conf, query.QueryID, requestParam)
 		}
 	}
 }
