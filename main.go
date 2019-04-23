@@ -155,7 +155,7 @@ func callResultAPIAndWriteFile(Conf Config, queryID string, requestParam string,
 	// ファイル書き込み
 	exportFileName := fmt.Sprintf("%s/%s.csv",
 		exportDir,
-		requestParam,
+		queryID + requestParam,
 	)
 
 	file, err := os.Create(exportFileName)

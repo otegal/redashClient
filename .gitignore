@@ -3,3 +3,8 @@ config.json
 cover.html
 cover.out
 test.csv
+.idea/workspace.xml
+.idea/vcs.xml
+.idea/redashClient.iml
+.idea/modules.xml
+.idea/misc.xml
