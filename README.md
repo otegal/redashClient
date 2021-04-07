@@ -9,7 +9,7 @@ configに設定値を入れて実行するだけ。
 
 
 ### 基本設定
-```json
+```jsonc
 {
     "apiKey": "Set your API Key", //RedashのUserAPIKeyをセットすること
     "baseUrl": "http://hogehoge.example.com", //利用する　RedashのURLを設定すること
@@ -27,7 +27,7 @@ queryキーで対象となるクエリとパラメタの設定を行う。
 以下にいくつか設定例を記す。
 
 クエリパラメタが存在しないクエリのcsvを取得する
-```json
+```jsonc
 {
     "apiKey": "Set your API Key",
     "baseUrl": "http://hogehoge.example.com",
@@ -41,7 +41,7 @@ queryキーで対象となるクエリとパラメタの設定を行う。
 ```
 
 クエリパラメタが1つだけ存在するクエリのcsvを取得する
-```json
+```jsonc
 {
     "apiKey": "Set your API Key",
     "baseUrl": "http://hogehoge.example.com",
@@ -63,7 +63,7 @@ queryキーで対象となるクエリとパラメタの設定を行う。
 ```
 
 クエリパラメタが2つ存在するクエリのcsvを取得する
-```json
+```jsonc
 {
     "apiKey": "Set your API Key",
     "baseUrl": "http://hogehoge.example.com",
@@ -88,7 +88,7 @@ queryキーで対象となるクエリとパラメタの設定を行う。
 
 複数のクエリに対してcsvを取得する。
 以下の場合、3つのクエリのCSVを取得できる。
-```json
+```jsonc
 {
     "apiKey": "Set your API Key",
     "baseUrl": "http://hogehoge.example.com",
